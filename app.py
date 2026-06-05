@@ -94,6 +94,86 @@ class Login(Resource):
             "refresh_token": refresh_token
         }, 200)
 api.add_resource(Login, '/login')
+
+class ChangePassword(Resource):
+
+    def patch(self,id):
+
+        user = User.query.filter_by(id=id).first()
+
+        if not user:
+            return make_response(
+                {"msg": "User not found"},
+                404
+            )
+
+        data = request.get_json()
+
+        current_password = data.get("current_password")
+        new_password = data.get("new_password")
+
+        if not current_password or not new_password:
+            return make_response(
+                {"msg": "Current password and new password are required"},
+                400
+            )
+
+        if not check_password_hash(
+            user.password,
+            current_password
+        ):
+            return make_response(
+                {"msg": "Current password is incorrect"},
+                401
+            )
+
+        user.password = generate_password_hash(new_password)
+
+        db.session.commit()
+
+        return make_response(
+            {"msg": "Password changed successfully"},
+            200
+        )
+
+api.add_resource(ChangePassword,"/users/<int:id>/change-password")
+
+
+class ChangePhoneNumber(Resource):
+
+    def patch(self,id):
+
+        user = User.query.filter_by(id=id).first()
+
+        if not user:
+            return make_response(
+                {"msg": "User not found"},
+                404
+            )
+
+        data = request.get_json()
+
+        phone_number = data.get("phone_number")
+
+        if not phone_number or phone_number.strip() == "":
+            return make_response(
+                {"msg": "Phone number is required"},
+                400
+            )
+
+        user.phone_number = phone_number.strip()
+
+        db.session.commit()
+
+        return make_response(
+            {
+                "msg": "Phone number updated successfully",
+                "phone_number": user.phone_number
+            },
+            200
+        )
+
+api.add_resource(ChangePhoneNumber,"/users/<int:id>/change-phone-number")
 class Get_users(Resource):
     def get(self):
         users=User.query.all()
