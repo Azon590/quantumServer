@@ -95,6 +95,24 @@ class Login(Resource):
         }, 200)
 api.add_resource(Login, '/login')
 
+@app.route("/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json()
+
+    email = data.get("email")
+    new_password = data.get("password")
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    user.password = generate_password_hash(new_password)
+
+    db.session.commit()
+
+    return jsonify({"message": "Password updated successfully"})
+
 class ChangePassword(Resource):
 
     def patch(self,id):
